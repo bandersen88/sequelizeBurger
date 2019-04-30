@@ -1,30 +1,24 @@
-var express = require("express");
-var router = express.Router();
 
-var burger = require("../models/burger.js");
+var db = require("../models");
 
+module.exports = function(app) {
 
-router.get("/", function(req, res) {
-    // console.log(req);
-    burger.all(function(data) {
-      var hbsObject = {
-        burger: data
-      };
-      console.log("*************************");
-      console.log(hbsObject);
-      res.render("index", hbsObject);
-    });
-  });
+app.get("/", function(req, res) {
+    db.Burger.findAll({}).then(function(dbBurger) {
+        var hbsObject = {
+            burger: dbBurger
+          };
+        res.render("index", hbsObject);
+    })
+});
 
-router.put("/api/burgers/:id", function(req, res) {
-    var condition = req.params.id;
-    burger.devour(
-        {
-            devourVal: req.body.devour
-        },
-        condition,
-        function(result) {
-        if (result.changedRows === 0) {
+// How do I get this to refresh the page?
+app.post("/api/burgers", function(req,res) {
+    db.Burger.create({
+        burger_name: req.body.name
+    }).then(function(result) {
+        // For some reason this isn't working
+        if (!result._options.isNewRecord) {
             // If no rows were changed, then the ID must not exist, so 404
             return res.status(404).end();
         }
@@ -33,11 +27,19 @@ router.put("/api/burgers/:id", function(req, res) {
     );
 });
 
-router.post("/api/burgers", function(req, res) {
-    burger.create(req.body.name,req.body.devoured, function(result) {
-        res.json({id: result.insertId});
+
+app.put("/api/burgers/:id", function(req,res) {
+    db.Burger.update({
+        devoured: req.body.devour
+    }, {
+        where: {
+            id: req.params.id
+        }
     })
+    .then(function(result) {
+        res.json(result);
+    });
 });
 
-// Export routes for server.js to use.
-module.exports = router;
+};
+

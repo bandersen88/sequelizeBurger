@@ -1,8 +1,9 @@
 var express = require("express");
+var db = require("./models");
 
 // Use for Heroku Deployment
-var PORT = process.env.PORT || 3000;
-// var PORT = 3000;
+// var PORT = process.env.PORT || 3000;
+var PORT = 3000;
 
 var app = express();
 
@@ -19,11 +20,17 @@ var exphbs = require("express-handlebars");
 app.engine("handlebars", exphbs({ defaultLayout: "main" }));
 app.set("view engine", "handlebars");
 
-// Import routes and give the server access to them.
-var routes = require("./controllers/burgers_controller.js");
 
-app.use(routes);
+// What's the difference between these two definitions?
+// 1)
+// var routes = require("./controllers/burgers_controller.js");
+// app.use(routes);
 
-app.listen(PORT, function() {
-  console.log("App now listening at localhost:" + PORT);
+// 2)
+require("./controllers/burgers_controller.js")(app);
+
+db.sequelize.sync().then(function() {
+  app.listen(PORT, function() {
+    console.log("App listening on PORT " + PORT);
+  });
 });
